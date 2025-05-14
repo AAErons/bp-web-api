@@ -1,0 +1,26 @@
+{
+  "name": "gallery-backend",
+  "version": "1.0.0",
+  "description": "Backend for managing galleries and images with MongoDB and Cloudinary",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js",
+    "build": "echo 'No build step required for Vercel with Node.js serverless functions'"
+  },
+  "dependencies": {
+    "cloudinary": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.4.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+} 
