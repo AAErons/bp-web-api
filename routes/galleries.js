@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const Gallery = require('../models/Gallery');
+const { Gallery, dropGalleryIndexes } = require('../models/Gallery');
 const GalleryImage = require('../models/GalleryImage'); // Uncommented and will be used
 const cloudinary = require('cloudinary').v2; // Import Cloudinary
 const mongoose = require('mongoose');
+
+// Drop indexes when the server starts
+dropGalleryIndexes().catch(console.error);
 
 // GET all galleries
 router.get('/', async (req, res) => {

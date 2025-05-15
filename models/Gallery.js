@@ -43,11 +43,21 @@ gallerySchema.pre('save', function (next) {
   next();
 });
 
-// Drop any existing indexes on the collection
-Gallery.collection.dropIndexes().catch(err => {
-  if (err.code !== 26) { // Ignore "namespace not found" error
-    console.error('Error dropping indexes:', err);
-  }
-});
+const Gallery = mongoose.model('Gallery', gallerySchema);
 
-module.exports = mongoose.model('Gallery', gallerySchema); 
+// Function to drop indexes - can be called when needed
+const dropGalleryIndexes = async () => {
+  try {
+    await Gallery.collection.dropIndexes();
+  } catch (err) {
+    if (err.code !== 26) { // Ignore "namespace not found" error
+      console.error('Error dropping indexes:', err);
+    }
+  }
+};
+
+// Export both the model and the dropIndexes function
+module.exports = {
+  Gallery,
+  dropGalleryIndexes
+}; 
