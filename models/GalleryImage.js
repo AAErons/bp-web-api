@@ -4,7 +4,7 @@ const galleryImageSchema = new mongoose.Schema({
   gallery: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Gallery',
-    required: true,
+    required: false, // Now optional
   },
   cloudinaryId: {
     type: String,

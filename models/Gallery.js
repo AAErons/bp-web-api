@@ -14,6 +14,7 @@ const gallerySchema = new mongoose.Schema({
   coverImage: {
     type: String, // Could be a Cloudinary public_id or a full URL
   },
+  images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'GalleryImage' }], // New field for image references
   // Optional: To store image IDs belonging to this gallery directly if not using a separate Image collection for references
   // images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'GalleryImage' }], 
   createdAt: {

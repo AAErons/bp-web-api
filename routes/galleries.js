@@ -36,7 +36,7 @@ router.get('/:id', async (req, res) => {
 
 // POST (create) a new gallery
 router.post('/', async (req, res) => {
-  const { name, description, coverImage } = req.body;
+  const { name, description, coverImage, images } = req.body;
   if (!name) {
     return res.status(400).json({ message: 'Gallery name is required' });
   }
@@ -46,6 +46,7 @@ router.post('/', async (req, res) => {
       name,
       description,
       coverImage, // Assuming coverImage is a Cloudinary ID/URL provided by client
+      images: images || [], // Accept images array if provided
     });
     const savedGallery = await newGallery.save();
     res.status(201).json(savedGallery);
@@ -57,11 +58,11 @@ router.post('/', async (req, res) => {
 
 // PUT (update) a gallery by ID
 router.put('/:id', async (req, res) => {
-  const { name, description, coverImage } = req.body;
+  const { name, description, coverImage, images } = req.body;
   try {
     const updatedGallery = await Gallery.findByIdAndUpdate(
       req.params.id,
-      { name, description, coverImage, updatedAt: Date.now() },
+      { name, description, coverImage, images, updatedAt: Date.now() },
       { new: true, runValidators: true } // new: true returns the updated doc, runValidators ensures schema rules apply
     );
     if (!updatedGallery) {

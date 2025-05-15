@@ -35,11 +35,8 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// POST (upload) a new image to a specific gallery
-// The route could be /:galleryId/images or just /images and pass galleryId in body/form-data
-// Using /:galleryId/images is more RESTful for associating an image with a gallery
-router.post('/:galleryId', upload.single('imageFile'), async (req, res) => {
-  const { galleryId } = req.params;
+// POST (upload) a new image (no gallery required)
+router.post('/', upload.single('imageFile'), async (req, res) => {
   const { caption, order } = req.body;
 
   if (!req.file) {
@@ -47,16 +44,7 @@ router.post('/:galleryId', upload.single('imageFile'), async (req, res) => {
   }
 
   try {
-    // Check if gallery exists
-    const galleryExists = await Gallery.findById(galleryId);
-    if (!galleryExists) {
-      // If gallery doesn't exist, we might want to delete the uploaded image from Cloudinary
-      await cloudinary.uploader.destroy(req.file.filename); // req.file.filename is public_id with CloudinaryStorage
-      return res.status(404).json({ message: 'Gallery not found. Image upload aborted.' });
-    }
-
     const newImage = new GalleryImage({
-      gallery: galleryId,
       cloudinaryId: req.file.filename, // This is the public_id from CloudinaryStorage
       imageUrl: req.file.path,       // This is the secure_url from CloudinaryStorage
       caption,
