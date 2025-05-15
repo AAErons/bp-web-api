@@ -11,7 +11,20 @@ dropGalleryIndexes().catch(console.error);
 // GET all galleries
 router.get('/', async (req, res) => {
   try {
-    const galleries = await Gallery.find().sort({ createdAt: -1 });
+    const galleries = await Gallery.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'images',
+        select: 'url cloudinaryId title description uploadedAt', // Select the fields we want
+        transform: (doc) => ({
+          id: doc._id.toString(),
+          url: doc.url,
+          cloudinaryId: doc.cloudinaryId,
+          title: doc.title,
+          description: doc.description,
+          uploadedAt: doc.uploadedAt
+        })
+      });
     res.json(galleries);
   } catch (err) {
     console.error('Error fetching galleries:', err.message);
@@ -22,9 +35,20 @@ router.get('/', async (req, res) => {
 // GET a single gallery by ID
 router.get('/:id', async (req, res) => {
   try {
-    const gallery = await Gallery.findById(req.params.id);
-    // Optionally populate images if you have a direct reference in Gallery model
-    // const gallery = await Gallery.findById(req.params.id).populate('images'); 
+    const gallery = await Gallery.findById(req.params.id)
+      .populate({
+        path: 'images',
+        select: 'url cloudinaryId title description uploadedAt', // Select the fields we want
+        transform: (doc) => ({
+          id: doc._id.toString(),
+          url: doc.url,
+          cloudinaryId: doc.cloudinaryId,
+          title: doc.title,
+          description: doc.description,
+          uploadedAt: doc.uploadedAt
+        })
+      });
+
     if (!gallery) {
       return res.status(404).json({ message: 'Gallery not found' });
     }
@@ -32,7 +56,7 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error(`Error fetching gallery ${req.params.id}:`, err.message);
     if (err.kind === 'ObjectId') {
-        return res.status(400).json({ message: 'Invalid gallery ID format' });
+      return res.status(400).json({ message: 'Invalid gallery ID format' });
     }
     res.status(500).json({ message: 'Failed to fetch gallery', error: err.message });
   }
