@@ -39,6 +39,9 @@ const upload = multer({ storage: storage });
 router.post('/', upload.single('imageFile'), async (req, res) => {
   const { caption, order } = req.body;
 
+  // Log the file object returned by multer-storage-cloudinary
+  console.log('Cloudinary upload result:', req.file);
+
   if (!req.file) {
     return res.status(400).json({ message: 'No image file uploaded.' });
   }

@@ -26,18 +26,6 @@ const galleryImageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  // You might want an updatedAt if captions or order can be modified
-  // updatedAt: {
-  //   type: Date,
-  //   default: Date.now,
-  // },
 });
-
-// galleryImageSchema.pre('save', function(next) {
-//   if (this.isModified()) { // only update if a modification happened
-//     this.updatedAt = Date.now();
-//   }
-//   next();
-// });
 
 module.exports = mongoose.model('GalleryImage', galleryImageSchema); 
