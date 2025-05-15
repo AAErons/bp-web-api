@@ -99,9 +99,13 @@ router.post('/', async (req, res) => {
           titleImage: false
         };
       }
-      // If img is already an object with image and titleImage
+      // If img is an object, handle both 'id' and 'image' fields
+      const imageId = img.id || img.image;
+      if (!imageId) {
+        throw new Error('Image ID is required for each image');
+      }
       return {
-        image: new mongoose.Types.ObjectId(img.image),
+        image: new mongoose.Types.ObjectId(imageId),
         titleImage: img.titleImage || false
       };
     }) : [];
@@ -166,9 +170,13 @@ router.put('/:id', async (req, res) => {
           titleImage: false
         };
       }
-      // If img is already an object with image and titleImage
+      // If img is an object, handle both 'id' and 'image' fields
+      const imageId = img.id || img.image;
+      if (!imageId) {
+        throw new Error('Image ID is required for each image');
+      }
       return {
-        image: new mongoose.Types.ObjectId(img.image),
+        image: new mongoose.Types.ObjectId(imageId),
         titleImage: img.titleImage || false
       };
     }) : [];
