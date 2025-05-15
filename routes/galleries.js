@@ -64,7 +64,7 @@ router.get('/:id', async (req, res) => {
 
 // POST (create) a new gallery
 router.post('/', async (req, res) => {
-  const { name, description, coverImage, images, eventDate } = req.body;
+  const { name, coverImage, images, eventDate } = req.body;
   if (!name) {
     return res.status(400).json({ message: 'Gallery name is required' });
   }
@@ -82,7 +82,6 @@ router.post('/', async (req, res) => {
     // Create gallery without explicitly setting _id
     const galleryData = {
       name,
-      description,
       coverImage,
       eventDate: eventDate ? new Date(eventDate) : undefined,
       images: imageObjectIds,
@@ -108,12 +107,18 @@ router.post('/', async (req, res) => {
 
 // PUT (update) a gallery by ID
 router.put('/:id', async (req, res) => {
-  const { name, description, coverImage, images } = req.body;
+  const { name, coverImage, images, eventDate } = req.body;
   try {
     const updatedGallery = await Gallery.findByIdAndUpdate(
       req.params.id,
-      { name, description, coverImage, images, updatedAt: Date.now() },
-      { new: true, runValidators: true } // new: true returns the updated doc, runValidators ensures schema rules apply
+      { 
+        name, 
+        coverImage, 
+        images, 
+        eventDate: eventDate ? new Date(eventDate) : undefined,
+        updatedAt: Date.now() 
+      },
+      { new: true, runValidators: true }
     );
     if (!updatedGallery) {
       return res.status(404).json({ message: 'Gallery not found' });
@@ -122,7 +127,7 @@ router.put('/:id', async (req, res) => {
   } catch (err) {
     console.error(`Error updating gallery ${req.params.id}:`, err.message);
     if (err.kind === 'ObjectId') {
-        return res.status(400).json({ message: 'Invalid gallery ID format' });
+      return res.status(400).json({ message: 'Invalid gallery ID format' });
     }
     res.status(500).json({ message: 'Failed to update gallery', error: err.message });
   }

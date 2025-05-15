@@ -10,10 +10,6 @@ const gallerySchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  description: {
-    type: String,
-    trim: true,
-  },
   eventDate: {
     type: Date,
   },
