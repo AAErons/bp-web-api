@@ -3,6 +3,7 @@ const router = express.Router();
 const Gallery = require('../models/Gallery');
 const GalleryImage = require('../models/GalleryImage'); // Uncommented and will be used
 const cloudinary = require('cloudinary').v2; // Import Cloudinary
+const mongoose = require('mongoose');
 
 // GET all galleries
 router.get('/', async (req, res) => {
@@ -36,22 +37,29 @@ router.get('/:id', async (req, res) => {
 
 // POST (create) a new gallery
 router.post('/', async (req, res) => {
-  const { name, description, coverImage, images } = req.body;
+  const { name, description, coverImage, images, eventDate } = req.body;
   if (!name) {
     return res.status(400).json({ message: 'Gallery name is required' });
   }
 
   try {
+    // Convert string image IDs to ObjectIds if they exist
+    const imageObjectIds = images ? images.map(id => new mongoose.Types.ObjectId(id)) : [];
+
     const newGallery = new Gallery({
       name,
       description,
-      coverImage, // Assuming coverImage is a Cloudinary ID/URL provided by client
-      images: images || [], // Accept images array if provided
+      coverImage,
+      eventDate,
+      images: imageObjectIds, // Use the converted ObjectIds
     });
     const savedGallery = await newGallery.save();
     res.status(201).json(savedGallery);
   } catch (err) {
     console.error('Error creating gallery:', err.message);
+    if (err.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid image ID format' });
+    }
     res.status(500).json({ message: 'Failed to create gallery', error: err.message });
   }
 });
