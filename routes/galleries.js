@@ -14,18 +14,28 @@ router.get('/', async (req, res) => {
     const galleries = await Gallery.find()
       .sort({ createdAt: -1 })
       .populate({
-        path: 'images',
-        select: 'imageUrl cloudinaryId caption uploadedAt', // Updated to use imageUrl
+        path: 'images.image',
+        select: 'imageUrl cloudinaryId caption uploadedAt',
         transform: (doc) => ({
           id: doc._id.toString(),
-          url: doc.imageUrl, // Map imageUrl to url in the response
+          url: doc.imageUrl,
           cloudinaryId: doc.cloudinaryId,
-          title: doc.caption, // Map caption to title
-          description: doc.caption, // Using caption as description as well
+          title: doc.caption,
+          description: doc.caption,
           uploadedAt: doc.uploadedAt
         })
       });
-    res.json(galleries);
+
+    // Transform the response to include titleImage
+    const transformedGalleries = galleries.map(gallery => ({
+      ...gallery.toObject(),
+      images: gallery.images.map(img => ({
+        ...img.image,
+        titleImage: img.titleImage
+      }))
+    }));
+
+    res.json(transformedGalleries);
   } catch (err) {
     console.error('Error fetching galleries:', err.message);
     res.status(500).json({ message: 'Failed to fetch galleries', error: err.message });
@@ -37,14 +47,14 @@ router.get('/:id', async (req, res) => {
   try {
     const gallery = await Gallery.findById(req.params.id)
       .populate({
-        path: 'images',
-        select: 'imageUrl cloudinaryId caption uploadedAt', // Updated to use imageUrl
+        path: 'images.image',
+        select: 'imageUrl cloudinaryId caption uploadedAt',
         transform: (doc) => ({
           id: doc._id.toString(),
-          url: doc.imageUrl, // Map imageUrl to url in the response
+          url: doc.imageUrl,
           cloudinaryId: doc.cloudinaryId,
-          title: doc.caption, // Map caption to title
-          description: doc.caption, // Using caption as description as well
+          title: doc.caption,
+          description: doc.caption,
           uploadedAt: doc.uploadedAt
         })
       });
@@ -52,7 +62,17 @@ router.get('/:id', async (req, res) => {
     if (!gallery) {
       return res.status(404).json({ message: 'Gallery not found' });
     }
-    res.json(gallery);
+
+    // Transform the response to include titleImage
+    const transformedGallery = {
+      ...gallery.toObject(),
+      images: gallery.images.map(img => ({
+        ...img.image,
+        titleImage: img.titleImage
+      }))
+    };
+
+    res.json(transformedGallery);
   } catch (err) {
     console.error(`Error fetching gallery ${req.params.id}:`, err.message);
     if (err.kind === 'ObjectId') {
@@ -70,29 +90,57 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Convert string image IDs to ObjectIds if they exist
-    const imageObjectIds = images ? images.map(id => {
-      try {
-        return new mongoose.Types.ObjectId(id);
-      } catch (err) {
-        throw new Error(`Invalid image ID format: ${id}`);
+    // Convert images array to include titleImage field
+    const imageObjects = images ? images.map(img => {
+      // If img is a string, convert it to an object with default titleImage: false
+      if (typeof img === 'string') {
+        return {
+          image: new mongoose.Types.ObjectId(img),
+          titleImage: false
+        };
       }
+      // If img is already an object with image and titleImage
+      return {
+        image: new mongoose.Types.ObjectId(img.image),
+        titleImage: img.titleImage || false
+      };
     }) : [];
 
-    // Create gallery without explicitly setting _id
     const galleryData = {
       name,
       coverImage,
       eventDate: eventDate ? new Date(eventDate) : undefined,
-      images: imageObjectIds,
+      images: imageObjects,
     };
 
     const newGallery = new Gallery(galleryData);
     const savedGallery = await newGallery.save();
     
     // Populate the images field before sending response
-    const populatedGallery = await Gallery.findById(savedGallery._id).populate('images');
-    res.status(201).json(populatedGallery);
+    const populatedGallery = await Gallery.findById(savedGallery._id)
+      .populate({
+        path: 'images.image',
+        select: 'imageUrl cloudinaryId caption uploadedAt',
+        transform: (doc) => ({
+          id: doc._id.toString(),
+          url: doc.imageUrl,
+          cloudinaryId: doc.cloudinaryId,
+          title: doc.caption,
+          description: doc.caption,
+          uploadedAt: doc.uploadedAt
+        })
+      });
+
+    // Transform the response to include titleImage
+    const transformedGallery = {
+      ...populatedGallery.toObject(),
+      images: populatedGallery.images.map(img => ({
+        ...img.image,
+        titleImage: img.titleImage
+      }))
+    };
+
+    res.status(201).json(transformedGallery);
   } catch (err) {
     console.error('Error creating gallery:', err);
     if (err.name === 'CastError' || err.message.includes('Invalid image ID format')) {
@@ -109,21 +157,59 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { name, coverImage, images, eventDate } = req.body;
   try {
+    // Convert images array to include titleImage field
+    const imageObjects = images ? images.map(img => {
+      // If img is a string, convert it to an object with default titleImage: false
+      if (typeof img === 'string') {
+        return {
+          image: new mongoose.Types.ObjectId(img),
+          titleImage: false
+        };
+      }
+      // If img is already an object with image and titleImage
+      return {
+        image: new mongoose.Types.ObjectId(img.image),
+        titleImage: img.titleImage || false
+      };
+    }) : [];
+
     const updatedGallery = await Gallery.findByIdAndUpdate(
       req.params.id,
       { 
         name, 
         coverImage, 
-        images, 
+        images: imageObjects,
         eventDate: eventDate ? new Date(eventDate) : undefined,
         updatedAt: Date.now() 
       },
       { new: true, runValidators: true }
-    );
+    ).populate({
+      path: 'images.image',
+      select: 'imageUrl cloudinaryId caption uploadedAt',
+      transform: (doc) => ({
+        id: doc._id.toString(),
+        url: doc.imageUrl,
+        cloudinaryId: doc.cloudinaryId,
+        title: doc.caption,
+        description: doc.caption,
+        uploadedAt: doc.uploadedAt
+      })
+    });
+
     if (!updatedGallery) {
       return res.status(404).json({ message: 'Gallery not found' });
     }
-    res.json(updatedGallery);
+
+    // Transform the response to include titleImage
+    const transformedGallery = {
+      ...updatedGallery.toObject(),
+      images: updatedGallery.images.map(img => ({
+        ...img.image,
+        titleImage: img.titleImage
+      }))
+    };
+
+    res.json(transformedGallery);
   } catch (err) {
     console.error(`Error updating gallery ${req.params.id}:`, err.message);
     if (err.kind === 'ObjectId') {
