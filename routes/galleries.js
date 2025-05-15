@@ -44,21 +44,36 @@ router.post('/', async (req, res) => {
 
   try {
     // Convert string image IDs to ObjectIds if they exist
-    const imageObjectIds = images ? images.map(id => new mongoose.Types.ObjectId(id)) : [];
+    const imageObjectIds = images ? images.map(id => {
+      try {
+        return new mongoose.Types.ObjectId(id);
+      } catch (err) {
+        throw new Error(`Invalid image ID format: ${id}`);
+      }
+    }) : [];
 
-    const newGallery = new Gallery({
+    // Create gallery without explicitly setting _id
+    const galleryData = {
       name,
       description,
       coverImage,
-      eventDate,
-      images: imageObjectIds, // Use the converted ObjectIds
-    });
+      eventDate: eventDate ? new Date(eventDate) : undefined,
+      images: imageObjectIds,
+    };
+
+    const newGallery = new Gallery(galleryData);
     const savedGallery = await newGallery.save();
-    res.status(201).json(savedGallery);
+    
+    // Populate the images field before sending response
+    const populatedGallery = await Gallery.findById(savedGallery._id).populate('images');
+    res.status(201).json(populatedGallery);
   } catch (err) {
-    console.error('Error creating gallery:', err.message);
-    if (err.name === 'CastError') {
-      return res.status(400).json({ message: 'Invalid image ID format' });
+    console.error('Error creating gallery:', err);
+    if (err.name === 'CastError' || err.message.includes('Invalid image ID format')) {
+      return res.status(400).json({ message: err.message || 'Invalid image ID format' });
+    }
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Duplicate key error. Please try again.' });
     }
     res.status(500).json({ message: 'Failed to create gallery', error: err.message });
   }

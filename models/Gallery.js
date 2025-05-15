@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const gallerySchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    auto: true
+  },
   name: {
     type: String,
     required: true,
@@ -30,17 +34,20 @@ const gallerySchema = new mongoose.Schema({
   },
 });
 
+// Drop any existing indexes before creating new ones
+gallerySchema.index({ _id: 1 }, { unique: true });
+
 // Middleware to update 'updatedAt' field before saving
 gallerySchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// If you have a method that updates (like findOneAndUpdate), 
-// you might want to ensure updatedAt is updated there too.
-// gallerySchema.pre('findOneAndUpdate', function(next) {
-//   this.set({ updatedAt: new Date() });
-//   next();
-// });
+// Drop any existing indexes on the collection
+Gallery.collection.dropIndexes().catch(err => {
+  if (err.code !== 26) { // Ignore "namespace not found" error
+    console.error('Error dropping indexes:', err);
+  }
+});
 
 module.exports = mongoose.model('Gallery', gallerySchema); 
