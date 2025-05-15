@@ -15,13 +15,13 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: 'images',
-        select: 'url cloudinaryId title description uploadedAt', // Select the fields we want
+        select: 'imageUrl cloudinaryId caption uploadedAt', // Updated to use imageUrl
         transform: (doc) => ({
           id: doc._id.toString(),
-          url: doc.url,
+          url: doc.imageUrl, // Map imageUrl to url in the response
           cloudinaryId: doc.cloudinaryId,
-          title: doc.title,
-          description: doc.description,
+          title: doc.caption, // Map caption to title
+          description: doc.caption, // Using caption as description as well
           uploadedAt: doc.uploadedAt
         })
       });
@@ -38,13 +38,13 @@ router.get('/:id', async (req, res) => {
     const gallery = await Gallery.findById(req.params.id)
       .populate({
         path: 'images',
-        select: 'url cloudinaryId title description uploadedAt', // Select the fields we want
+        select: 'imageUrl cloudinaryId caption uploadedAt', // Updated to use imageUrl
         transform: (doc) => ({
           id: doc._id.toString(),
-          url: doc.url,
+          url: doc.imageUrl, // Map imageUrl to url in the response
           cloudinaryId: doc.cloudinaryId,
-          title: doc.title,
-          description: doc.description,
+          title: doc.caption, // Map caption to title
+          description: doc.caption, // Using caption as description as well
           uploadedAt: doc.uploadedAt
         })
       });
