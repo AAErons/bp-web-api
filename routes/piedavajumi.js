@@ -107,17 +107,8 @@ router.post('/', async (req, res) => {
   if (!title) {
     return res.status(400).json({ message: 'Title is required' });
   }
-  if (!duration) {
-    return res.status(400).json({ message: 'Duration is required' });
-  }
   if (!description) {
     return res.status(400).json({ message: 'Description is required' });
-  }
-  if (!additionalTitle) {
-    return res.status(400).json({ message: 'Additional title is required' });
-  }
-  if (!additionalDescription) {
-    return res.status(400).json({ message: 'Additional description is required' });
   }
   if (!image) {
     return res.status(400).json({ message: 'Image URL is required' });

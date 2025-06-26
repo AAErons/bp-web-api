@@ -12,7 +12,6 @@ const piedavajumsSchema = new mongoose.Schema({
   },
   duration: {
     type: String,
-    required: true,
     trim: true
   },
   description: {
@@ -22,12 +21,10 @@ const piedavajumsSchema = new mongoose.Schema({
   },
   additionalTitle: {
     type: String,
-    required: true,
     trim: true
   },
   additionalDescription: {
     type: String,
-    required: true,
     trim: true
   },
   image: {
