@@ -8,6 +8,7 @@ const cloudinary = require('cloudinary').v2;
 const galleryRoutes = require('../routes/galleries');
 const imageRoutes = require('../routes/images');
 const teamMemberRoutes = require('../routes/team-members');
+const aboutTextRoutes = require('../routes/about-text');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -52,6 +53,7 @@ app.get('/api', (req, res) => {
 app.use('/api/galleries', galleryRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/team-members', teamMemberRoutes);
+app.use('/api/about-text', aboutTextRoutes);
 
 // Global error handler (optional, can be more sophisticated)
 app.use((err, req, res, next) => {
