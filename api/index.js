@@ -11,6 +11,7 @@ const teamMemberRoutes = require('../routes/team-members');
 const aboutTextRoutes = require('../routes/about-text');
 const testimonialRoutes = require('../routes/testimonials');
 const partnerRoutes = require('../routes/partners');
+const piedavajumiRoutes = require('../routes/piedavajumi');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -58,6 +59,7 @@ app.use('/api/team-members', teamMemberRoutes);
 app.use('/api/about-text', aboutTextRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/partners', partnerRoutes);
+app.use('/api/piedavajumi', piedavajumiRoutes);
 
 // Global error handler (optional, can be more sophisticated)
 app.use((err, req, res, next) => {
