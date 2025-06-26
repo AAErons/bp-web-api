@@ -11,7 +11,7 @@ dropPiedavajumsHeaderIndexes().catch(console.error);
 router.get('/', async (req, res) => {
   try {
     const piedavajumi = await Piedavajums.find()
-      .sort({ createdAt: -1 });
+      .sort({ order: 1, createdAt: -1 });
 
     res.json(piedavajumi);
   } catch (err) {
@@ -101,7 +101,7 @@ router.get('/:id', async (req, res) => {
 
 // POST (create) a new piedavajums
 router.post('/', async (req, res) => {
-  const { title, duration, description, additionalTitle, additionalDescription, image } = req.body;
+  const { title, duration, description, additionalTitle, additionalDescription, image, order } = req.body;
   
   // Validate required fields
   if (!title) {
@@ -115,6 +115,13 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    // If order is not provided, assign it to the end of the list
+    let finalOrder = order;
+    if (finalOrder === undefined || finalOrder === null) {
+      const lastPiedavajums = await Piedavajums.findOne().sort({ order: -1 });
+      finalOrder = lastPiedavajums ? lastPiedavajums.order + 1 : 0;
+    }
+
     const piedavajumsData = {
       title,
       duration,
@@ -122,6 +129,7 @@ router.post('/', async (req, res) => {
       additionalTitle,
       additionalDescription,
       image,
+      order: finalOrder
     };
 
     const newPiedavajums = new Piedavajums(piedavajumsData);
@@ -139,7 +147,7 @@ router.post('/', async (req, res) => {
 
 // PUT (update) a piedavajums by ID
 router.put('/:id', async (req, res) => {
-  const { title, duration, description, additionalTitle, additionalDescription, image } = req.body;
+  const { title, duration, description, additionalTitle, additionalDescription, image, order } = req.body;
   
   try {
     const updateData = {};
@@ -149,6 +157,7 @@ router.put('/:id', async (req, res) => {
     if (additionalTitle !== undefined) updateData.additionalTitle = additionalTitle;
     if (additionalDescription !== undefined) updateData.additionalDescription = additionalDescription;
     if (image !== undefined) updateData.image = image;
+    if (order !== undefined) updateData.order = order;
     
     // Always update the updatedAt timestamp
     updateData.updatedAt = Date.now();
@@ -190,6 +199,27 @@ router.delete('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid piedavajums ID format' });
     }
     res.status(500).json({ message: 'Failed to delete piedavajums', error: err.message });
+  }
+});
+
+// PUT reorder piedavajumi
+router.put('/reorder', async (req, res) => {
+  try {
+    const { sectionIds } = req.body;
+    
+    if (!sectionIds || !Array.isArray(sectionIds)) {
+      return res.status(400).json({ message: 'sectionIds array is required' });
+    }
+    
+    // Update order for each section
+    for (let i = 0; i < sectionIds.length; i++) {
+      await Piedavajums.findByIdAndUpdate(sectionIds[i], { order: i });
+    }
+    
+    res.json({ message: 'Sections reordered successfully' });
+  } catch (err) {
+    console.error('Error reordering piedavajumi:', err.message);
+    res.status(500).json({ message: 'Failed to reorder sections', error: err.message });
   }
 });
 
