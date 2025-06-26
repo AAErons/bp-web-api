@@ -7,6 +7,7 @@ const cloudinary = require('cloudinary').v2;
 // Import routes
 const galleryRoutes = require('../routes/galleries');
 const imageRoutes = require('../routes/images');
+const teamMemberRoutes = require('../routes/team-members');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +51,7 @@ app.get('/api', (req, res) => {
 // Mount routes
 app.use('/api/galleries', galleryRoutes);
 app.use('/api/images', imageRoutes);
+app.use('/api/team-members', teamMemberRoutes);
 
 // Global error handler (optional, can be more sophisticated)
 app.use((err, req, res, next) => {
