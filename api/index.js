@@ -10,6 +10,7 @@ const imageRoutes = require('../routes/images');
 const teamMemberRoutes = require('../routes/team-members');
 const aboutTextRoutes = require('../routes/about-text');
 const testimonialRoutes = require('../routes/testimonials');
+const partnerRoutes = require('../routes/partners');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -56,6 +57,7 @@ app.use('/api/images', imageRoutes);
 app.use('/api/team-members', teamMemberRoutes);
 app.use('/api/about-text', aboutTextRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/partners', partnerRoutes);
 
 // Global error handler (optional, can be more sophisticated)
 app.use((err, req, res, next) => {
