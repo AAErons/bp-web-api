@@ -1,11 +1,21 @@
 const mongoose = require('mongoose');
 
-// Define a subdocument schema for gallery images
+// Define a subdocument schema for gallery images that can handle both ObjectIds and URLs
 const galleryImageReferenceSchema = new mongoose.Schema({
   image: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'GalleryImage',
-    required: true
+    required: false // Now optional since we'll handle URLs too
+  },
+  // For direct Cloudinary URLs
+  imageUrl: {
+    type: String,
+    required: false
+  },
+  // For Cloudinary ID extraction from URL
+  cloudinaryId: {
+    type: String,
+    required: false
   },
   titleImage: {
     type: Boolean,

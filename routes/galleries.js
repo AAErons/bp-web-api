@@ -8,6 +8,31 @@ const mongoose = require('mongoose');
 // Drop indexes when the server starts
 dropGalleryIndexes().catch(console.error);
 
+// Helper function to extract Cloudinary ID from URL
+function extractCloudinaryIdFromUrl(url) {
+  try {
+    // Handle different Cloudinary URL formats
+    // Format: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/filename.jpg
+    const urlParts = url.split('/');
+    const uploadIndex = urlParts.findIndex(part => part === 'upload');
+    
+    if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
+      // Get everything after 'upload/v1234567890/'
+      const pathAfterUpload = urlParts.slice(uploadIndex + 2).join('/');
+      // Remove file extension
+      const cloudinaryId = pathAfterUpload.split('.')[0];
+      return cloudinaryId;
+    }
+    
+    // Fallback: try to get the last part before extension
+    const filenameWithExt = urlParts[urlParts.length - 1];
+    return filenameWithExt.split('.')[0];
+  } catch (error) {
+    console.error('Error extracting Cloudinary ID from URL:', error);
+    return null;
+  }
+}
+
 // GET all galleries
 router.get('/', async (req, res) => {
   try {
@@ -92,25 +117,89 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Convert images array to include titleImage field
-    const imageObjects = images ? images.map(img => {
-      // If img is a string, convert it to an object with default titleImage: false
-      if (typeof img === 'string') {
-        return {
-          image: new mongoose.Types.ObjectId(img),
-          titleImage: false
-        };
+    // Process images array - handle both URLs and ObjectIds
+    const imageObjects = [];
+    
+    if (images && Array.isArray(images)) {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        
+        if (typeof img === 'string') {
+          // If it's a Cloudinary URL, create a GalleryImage document
+          if (img.includes('cloudinary.com')) {
+            // Extract Cloudinary ID from URL
+            const cloudinaryId = extractCloudinaryIdFromUrl(img);
+            if (!cloudinaryId) {
+              throw new Error(`Invalid Cloudinary URL: ${img}`);
+            }
+            
+            // Create new GalleryImage document
+            const newImage = new GalleryImage({
+              cloudinaryId: cloudinaryId,
+              imageUrl: img,
+              cloudinaryData: {
+                public_id: cloudinaryId,
+                format: img.split('.').pop() || 'jpg',
+                resource_type: 'image'
+              },
+              order: i,
+              caption: `Image ${i + 1}`
+            });
+            
+            const savedImage = await newImage.save();
+            
+            imageObjects.push({
+              image: savedImage._id,
+              titleImage: i === 0 // First image is title image by default
+            });
+          } else {
+            // Assume it's an ObjectId string
+            imageObjects.push({
+              image: new mongoose.Types.ObjectId(img),
+              titleImage: i === 0
+            });
+          }
+        } else if (typeof img === 'object') {
+          // Handle object format
+          if (img.url && img.url.includes('cloudinary.com')) {
+            // Create GalleryImage from URL
+            const cloudinaryId = extractCloudinaryIdFromUrl(img.url);
+            if (!cloudinaryId) {
+              throw new Error(`Invalid Cloudinary URL: ${img.url}`);
+            }
+            
+            const newImage = new GalleryImage({
+              cloudinaryId: cloudinaryId,
+              imageUrl: img.url,
+              cloudinaryData: {
+                public_id: cloudinaryId,
+                format: img.url.split('.').pop() || 'jpg',
+                resource_type: 'image'
+              },
+              order: i,
+              caption: img.caption || `Image ${i + 1}`
+            });
+            
+            const savedImage = await newImage.save();
+            
+            imageObjects.push({
+              image: savedImage._id,
+              titleImage: img.titleImage || i === 0
+            });
+          } else {
+            // Handle ObjectId reference
+            const imageId = img.id || img.image;
+            if (!imageId) {
+              throw new Error('Image ID is required for each image object');
+            }
+            imageObjects.push({
+              image: new mongoose.Types.ObjectId(imageId),
+              titleImage: img.titleImage || i === 0
+            });
+          }
+        }
       }
-      // If img is an object, handle both 'id' and 'image' fields
-      const imageId = img.id || img.image;
-      if (!imageId) {
-        throw new Error('Image ID is required for each image');
-      }
-      return {
-        image: new mongoose.Types.ObjectId(imageId),
-        titleImage: img.titleImage || false
-      };
-    }) : [];
+    }
 
     const galleryData = {
       name,
@@ -165,25 +254,89 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { name, coverImage, coverImageId, images, eventDate } = req.body;
   try {
-    // Convert images array to include titleImage field
-    const imageObjects = images ? images.map(img => {
-      // If img is a string, convert it to an object with default titleImage: false
-      if (typeof img === 'string') {
-        return {
-          image: new mongoose.Types.ObjectId(img),
-          titleImage: false
-        };
+    // Process images array - handle both URLs and ObjectIds
+    const imageObjects = [];
+    
+    if (images && Array.isArray(images)) {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        
+        if (typeof img === 'string') {
+          // If it's a Cloudinary URL, create a GalleryImage document
+          if (img.includes('cloudinary.com')) {
+            // Extract Cloudinary ID from URL
+            const cloudinaryId = extractCloudinaryIdFromUrl(img);
+            if (!cloudinaryId) {
+              throw new Error(`Invalid Cloudinary URL: ${img}`);
+            }
+            
+            // Create new GalleryImage document
+            const newImage = new GalleryImage({
+              cloudinaryId: cloudinaryId,
+              imageUrl: img,
+              cloudinaryData: {
+                public_id: cloudinaryId,
+                format: img.split('.').pop() || 'jpg',
+                resource_type: 'image'
+              },
+              order: i,
+              caption: `Image ${i + 1}`
+            });
+            
+            const savedImage = await newImage.save();
+            
+            imageObjects.push({
+              image: savedImage._id,
+              titleImage: i === 0 // First image is title image by default
+            });
+          } else {
+            // Assume it's an ObjectId string
+            imageObjects.push({
+              image: new mongoose.Types.ObjectId(img),
+              titleImage: i === 0
+            });
+          }
+        } else if (typeof img === 'object') {
+          // Handle object format
+          if (img.url && img.url.includes('cloudinary.com')) {
+            // Create GalleryImage from URL
+            const cloudinaryId = extractCloudinaryIdFromUrl(img.url);
+            if (!cloudinaryId) {
+              throw new Error(`Invalid Cloudinary URL: ${img.url}`);
+            }
+            
+            const newImage = new GalleryImage({
+              cloudinaryId: cloudinaryId,
+              imageUrl: img.url,
+              cloudinaryData: {
+                public_id: cloudinaryId,
+                format: img.url.split('.').pop() || 'jpg',
+                resource_type: 'image'
+              },
+              order: i,
+              caption: img.caption || `Image ${i + 1}`
+            });
+            
+            const savedImage = await newImage.save();
+            
+            imageObjects.push({
+              image: savedImage._id,
+              titleImage: img.titleImage || i === 0
+            });
+          } else {
+            // Handle ObjectId reference
+            const imageId = img.id || img.image;
+            if (!imageId) {
+              throw new Error('Image ID is required for each image object');
+            }
+            imageObjects.push({
+              image: new mongoose.Types.ObjectId(imageId),
+              titleImage: img.titleImage || i === 0
+            });
+          }
+        }
       }
-      // If img is an object, handle both 'id' and 'image' fields
-      const imageId = img.id || img.image;
-      if (!imageId) {
-        throw new Error('Image ID is required for each image');
-      }
-      return {
-        image: new mongoose.Types.ObjectId(imageId),
-        titleImage: img.titleImage || false
-      };
-    }) : [];
+    }
 
     const updatedGallery = await Gallery.findByIdAndUpdate(
       req.params.id,
