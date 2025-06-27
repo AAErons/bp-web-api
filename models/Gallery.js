@@ -26,9 +26,15 @@ const gallerySchema = new mongoose.Schema({
   eventDate: {
     type: Date,
   },
-  // Optional: A cover image for the gallery (Cloudinary ID or URL)
+  // Cover image for the gallery - can be Cloudinary URL or ID
   coverImage: {
-    type: String, // Could be a Cloudinary public_id or a full URL
+    type: String, // Cloudinary URL
+    trim: true
+  },
+  // Cloudinary ID for the cover image (for easier management)
+  coverImageId: {
+    type: String, // Cloudinary public_id
+    trim: true
   },
   images: [galleryImageReferenceSchema],
   // Optional: To store image IDs belonging to this gallery directly if not using a separate Image collection for references

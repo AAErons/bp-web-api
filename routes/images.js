@@ -52,9 +52,22 @@ router.post('/', upload.single('imageFile'), async (req, res) => {
   }
 
   try {
+    // Extract Cloudinary metadata from the uploaded file
+    const cloudinaryData = {
+      public_id: req.file.filename,
+      format: req.file.format,
+      width: req.file.width,
+      height: req.file.height,
+      bytes: req.file.bytes,
+      resource_type: req.file.resource_type,
+      created_at: req.file.created_at,
+      etag: req.file.etag
+    };
+
     const newImage = new GalleryImage({
       cloudinaryId: req.file.filename, // This is the public_id from CloudinaryStorage
       imageUrl: req.file.path,       // This is the secure_url from CloudinaryStorage
+      cloudinaryData: cloudinaryData,
       caption,
       order,
     });
@@ -63,6 +76,74 @@ router.post('/', upload.single('imageFile'), async (req, res) => {
     res.status(201).json(savedImage);
   } catch (err) {
     console.error('Error uploading image:', err.message);
+    // If there was an error saving to DB, but file was uploaded, delete from Cloudinary
+    if (req.file) {
+      try {
+        await cloudinary.uploader.destroy(req.file.filename);
+      } catch (cldErr) {
+        console.error('Error deleting image from Cloudinary after DB error:', cldErr.message);
+      }
+    }
+    res.status(500).json({ message: 'Failed to upload image', error: err.message });
+  }
+});
+
+// POST (upload) a new image to a specific gallery
+router.post('/gallery/:galleryId', upload.single('imageFile'), async (req, res) => {
+  const { caption, order, titleImage } = req.body;
+  const { galleryId } = req.params;
+
+  // Log the file object returned by multer-storage-cloudinary
+  console.log('Cloudinary upload result:', req.file);
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file uploaded.' });
+  }
+
+  try {
+    // Verify gallery exists
+    const gallery = await Gallery.findById(galleryId);
+    if (!gallery) {
+      // Delete uploaded file from Cloudinary if gallery doesn't exist
+      await cloudinary.uploader.destroy(req.file.filename);
+      return res.status(404).json({ message: 'Gallery not found' });
+    }
+
+    // Extract Cloudinary metadata from the uploaded file
+    const cloudinaryData = {
+      public_id: req.file.filename,
+      format: req.file.format,
+      width: req.file.width,
+      height: req.file.height,
+      bytes: req.file.bytes,
+      resource_type: req.file.resource_type,
+      created_at: req.file.created_at,
+      etag: req.file.etag
+    };
+
+    const newImage = new GalleryImage({
+      gallery: galleryId,
+      cloudinaryId: req.file.filename,
+      imageUrl: req.file.path,
+      cloudinaryData: cloudinaryData,
+      caption,
+      order,
+    });
+
+    const savedImage = await newImage.save();
+
+    // If this is marked as title image, update other images in the gallery
+    if (titleImage) {
+      await GalleryImage.updateMany(
+        { gallery: galleryId, _id: { $ne: savedImage._id } },
+        { $unset: { titleImage: 1 } }
+      );
+      savedImage.titleImage = true;
+    }
+
+    res.status(201).json(savedImage);
+  } catch (err) {
+    console.error('Error uploading image to gallery:', err.message);
     // If there was an error saving to DB, but file was uploaded, delete from Cloudinary
     if (req.file) {
       try {

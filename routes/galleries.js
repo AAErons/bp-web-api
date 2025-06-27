@@ -15,14 +15,15 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: 'images.image',
-        select: 'imageUrl cloudinaryId caption uploadedAt',
+        select: 'imageUrl cloudinaryId caption uploadedAt cloudinaryData',
         transform: (doc) => ({
           id: doc._id.toString(),
           url: doc.imageUrl,
           cloudinaryId: doc.cloudinaryId,
           title: doc.caption,
           description: doc.caption,
-          uploadedAt: doc.uploadedAt
+          uploadedAt: doc.uploadedAt,
+          cloudinaryData: doc.cloudinaryData
         })
       });
 
@@ -48,14 +49,15 @@ router.get('/:id', async (req, res) => {
     const gallery = await Gallery.findById(req.params.id)
       .populate({
         path: 'images.image',
-        select: 'imageUrl cloudinaryId caption uploadedAt',
+        select: 'imageUrl cloudinaryId caption uploadedAt cloudinaryData',
         transform: (doc) => ({
           id: doc._id.toString(),
           url: doc.imageUrl,
           cloudinaryId: doc.cloudinaryId,
           title: doc.caption,
           description: doc.caption,
-          uploadedAt: doc.uploadedAt
+          uploadedAt: doc.uploadedAt,
+          cloudinaryData: doc.cloudinaryData
         })
       });
 
@@ -84,7 +86,7 @@ router.get('/:id', async (req, res) => {
 
 // POST (create) a new gallery
 router.post('/', async (req, res) => {
-  const { name, coverImage, images, eventDate } = req.body;
+  const { name, coverImage, coverImageId, images, eventDate } = req.body;
   if (!name) {
     return res.status(400).json({ message: 'Gallery name is required' });
   }
@@ -113,6 +115,7 @@ router.post('/', async (req, res) => {
     const galleryData = {
       name,
       coverImage,
+      coverImageId,
       eventDate: eventDate ? new Date(eventDate) : undefined,
       images: imageObjects,
     };
@@ -124,14 +127,15 @@ router.post('/', async (req, res) => {
     const populatedGallery = await Gallery.findById(savedGallery._id)
       .populate({
         path: 'images.image',
-        select: 'imageUrl cloudinaryId caption uploadedAt',
+        select: 'imageUrl cloudinaryId caption uploadedAt cloudinaryData',
         transform: (doc) => ({
           id: doc._id.toString(),
           url: doc.imageUrl,
           cloudinaryId: doc.cloudinaryId,
           title: doc.caption,
           description: doc.caption,
-          uploadedAt: doc.uploadedAt
+          uploadedAt: doc.uploadedAt,
+          cloudinaryData: doc.cloudinaryData
         })
       });
 
@@ -159,7 +163,7 @@ router.post('/', async (req, res) => {
 
 // PUT (update) a gallery by ID
 router.put('/:id', async (req, res) => {
-  const { name, coverImage, images, eventDate } = req.body;
+  const { name, coverImage, coverImageId, images, eventDate } = req.body;
   try {
     // Convert images array to include titleImage field
     const imageObjects = images ? images.map(img => {
@@ -186,6 +190,7 @@ router.put('/:id', async (req, res) => {
       { 
         name, 
         coverImage, 
+        coverImageId,
         images: imageObjects,
         eventDate: eventDate ? new Date(eventDate) : undefined,
         updatedAt: Date.now() 
@@ -193,14 +198,15 @@ router.put('/:id', async (req, res) => {
       { new: true, runValidators: true }
     ).populate({
       path: 'images.image',
-      select: 'imageUrl cloudinaryId caption uploadedAt',
+      select: 'imageUrl cloudinaryId caption uploadedAt cloudinaryData',
       transform: (doc) => ({
         id: doc._id.toString(),
         url: doc.imageUrl,
         cloudinaryId: doc.cloudinaryId,
         title: doc.caption,
         description: doc.caption,
-        uploadedAt: doc.uploadedAt
+        uploadedAt: doc.uploadedAt,
+        cloudinaryData: doc.cloudinaryData
       })
     });
 
